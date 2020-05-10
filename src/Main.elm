@@ -1,7 +1,7 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Html exposing (Html, div, h1, img, input, text)
+import Html exposing (Html, div, h1, h2, img, input, text)
 import Html.Attributes exposing (src, type_, value)
 import Html.Events exposing (onInput)
 
@@ -14,15 +14,21 @@ type alias Model =
     { input1 : Int
     , input2 : Int
     , input3 : Int
+    , sum : Int
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { input1 = 0
-      , input2 = 50
-      , input3 = 100
-      }
+    let
+        initialModel =
+            { input1 = 0
+            , input2 = 50
+            , input3 = 100
+            , sum = 0
+            }
+    in
+    ( updateSum initialModel
     , Cmd.none
     )
 
@@ -32,27 +38,47 @@ init =
 
 
 type Msg
-    = Slider1Changed String
-    | Slider2Changed String
-    | Slider3Changed String
+    = SliderChanged SliderInput String
+
+
+type SliderInput
+    = Slider1
+    | Slider2
+    | Slider3
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Slider1Changed sliderValue ->
-            ( { model | input1 = sliderValueToInt sliderValue }, Cmd.none )
-
-        Slider2Changed sliderValue ->
-            ( { model | input2 = sliderValueToInt sliderValue }, Cmd.none )
-
-        Slider3Changed sliderValue ->
-            ( { model | input3 = sliderValueToInt sliderValue }, Cmd.none )
+        SliderChanged slider sliderValue ->
+            ( updateSlider slider sliderValue model, Cmd.none )
 
 
 sliderValueToInt : String -> Int
 sliderValueToInt value =
     Maybe.withDefault 0 <| String.toInt value
+
+
+updateSum : Model -> Model
+updateSum model =
+    { model | sum = model.input1 + model.input2 + model.input3 }
+
+
+updateSlider : SliderInput -> String -> Model -> Model
+updateSlider sliderName value model =
+    let
+        updatedModel =
+            case sliderName of
+                Slider1 ->
+                    { model | input1 = sliderValueToInt value }
+
+                Slider2 ->
+                    { model | input2 = sliderValueToInt value }
+
+                Slider3 ->
+                    { model | input3 = sliderValueToInt value }
+    in
+    updateSum updatedModel
 
 
 
@@ -62,9 +88,10 @@ sliderValueToInt value =
 view : Model -> Html Msg
 view model =
     div []
-        [ sliderInput model.input1 Slider1Changed
-        , sliderInput model.input2 Slider2Changed
-        , sliderInput model.input3 Slider3Changed
+        [ h2 [] [ text <| String.fromInt model.sum ]
+        , sliderInput model.input1 <| SliderChanged Slider1
+        , sliderInput model.input2 <| SliderChanged Slider2
+        , sliderInput model.input3 <| SliderChanged Slider3
         ]
 
 
