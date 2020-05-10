@@ -11,10 +11,10 @@ import Html.Events exposing (onInput)
 
 
 type alias Model =
-    { input1 : Int
-    , input2 : Int
-    , input3 : Int
-    , sum : Int
+    { rolls : Float
+    , people : Float
+    , sheetsPerRoll : Float
+    , daysToRunOut : Float
     }
 
 
@@ -22,13 +22,13 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialModel =
-            { input1 = 0
-            , input2 = 50
-            , input3 = 100
-            , sum = 0
+            { rolls = 8
+            , people = 4
+            , sheetsPerRoll = 400
+            , daysToRunOut = 0
             }
     in
-    ( updateSum initialModel
+    ( updateDaysToRunOut initialModel
     , Cmd.none
     )
 
@@ -42,9 +42,9 @@ type Msg
 
 
 type SliderInput
-    = Slider1
-    | Slider2
-    | Slider3
+    = Rolls
+    | People
+    | SheetsPerRoll
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -54,14 +54,22 @@ update msg model =
             ( updateSlider slider sliderValue model, Cmd.none )
 
 
-sliderValueToInt : String -> Int
-sliderValueToInt value =
-    Maybe.withDefault 0 <| String.toInt value
+sliderValueToFloat : String -> Float
+sliderValueToFloat value =
+    Maybe.withDefault 0 <| String.toFloat value
 
 
-updateSum : Model -> Model
-updateSum model =
-    { model | sum = model.input1 + model.input2 + model.input3 }
+updateDaysToRunOut : Model -> Model
+updateDaysToRunOut model =
+    let
+        daysToRunOut =
+            (model.rolls / model.people)
+                * (model.sheetsPerRoll / 1)
+                * (1 / 10)
+                * (1 / 2)
+                * 1
+    in
+    { model | daysToRunOut = daysToRunOut }
 
 
 updateSlider : SliderInput -> String -> Model -> Model
@@ -69,16 +77,16 @@ updateSlider sliderName value model =
     let
         updatedModel =
             case sliderName of
-                Slider1 ->
-                    { model | input1 = sliderValueToInt value }
+                Rolls ->
+                    { model | rolls = sliderValueToFloat value }
 
-                Slider2 ->
-                    { model | input2 = sliderValueToInt value }
+                People ->
+                    { model | people = sliderValueToFloat value }
 
-                Slider3 ->
-                    { model | input3 = sliderValueToInt value }
+                SheetsPerRoll ->
+                    { model | sheetsPerRoll = sliderValueToFloat value }
     in
-    updateSum updatedModel
+    updateDaysToRunOut updatedModel
 
 
 
@@ -88,21 +96,22 @@ updateSlider sliderName value model =
 view : Model -> Html Msg
 view model =
     div []
-        [ h2 [] [ text <| String.fromInt model.sum ]
-        , sliderInput model.input1 <| SliderChanged Slider1
-        , sliderInput model.input2 <| SliderChanged Slider2
-        , sliderInput model.input3 <| SliderChanged Slider3
+        [ h2 [] [ text <| String.fromFloat model.daysToRunOut ]
+        , sliderInput "Rolls" model.rolls <| SliderChanged Rolls
+        , sliderInput "People per household" model.people <| SliderChanged People
+        , sliderInput "Sheets per roll" model.sheetsPerRoll <| SliderChanged SheetsPerRoll
         ]
 
 
-sliderInput : Int -> (String -> Msg) -> Html Msg
-sliderInput value_ tagger =
+sliderInput : String -> Float -> (String -> Msg) -> Html Msg
+sliderInput label value_ tagger =
     let
         sliderValue =
-            String.fromInt value_
+            String.fromFloat value_
     in
     div []
-        [ text sliderValue
+        [ text <| sliderValue ++ " "
+        , text label
         , input [ onInput tagger, type_ "range", value sliderValue ] []
         ]
 
