@@ -2,7 +2,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
 import Html exposing (Html, div, h1, h2, img, input, text)
-import Html.Attributes exposing (src, type_, value)
+import Html.Attributes as A exposing (src, type_, value)
 import Html.Events exposing (onInput)
 
 
@@ -45,6 +45,16 @@ type SliderInput
     = Rolls
     | People
     | SheetsPerRoll
+
+
+type alias SliderConfig =
+    { inputName : SliderInput
+    , tagger : String -> Msg
+    , rangeMin : Int
+    , rangeMax : Int
+    , stepSize : Int
+    , labelText : String
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -95,24 +105,62 @@ updateSlider sliderName value model =
 
 view : Model -> Html Msg
 view model =
+    let
+        daysToRunOut =
+            model.daysToRunOut
+                |> round
+                |> String.fromInt
+
+        daysToRunOutText =
+            daysToRunOut ++ " days until you run out"
+    in
     div []
-        [ h2 [] [ text <| String.fromFloat model.daysToRunOut ]
-        , sliderInput "Rolls" model.rolls <| SliderChanged Rolls
-        , sliderInput "People per household" model.people <| SliderChanged People
-        , sliderInput "Sheets per roll" model.sheetsPerRoll <| SliderChanged SheetsPerRoll
+        [ h2 [] [ text daysToRunOutText ]
+        , sliderInput model.rolls
+            { inputName = Rolls
+            , tagger = SliderChanged Rolls
+            , rangeMin = 1
+            , rangeMax = 100
+            , labelText = "Rolls"
+            , stepSize = 1
+            }
+        , sliderInput model.people
+            { inputName = People
+            , tagger = SliderChanged People
+            , rangeMin = 1
+            , rangeMax = 8
+            , labelText = "People per household"
+            , stepSize = 1
+            }
+        , sliderInput model.sheetsPerRoll
+            { inputName = SheetsPerRoll
+            , tagger = SliderChanged SheetsPerRoll
+            , rangeMin = 400
+            , rangeMax = 800
+            , labelText = "Sheets per roll"
+            , stepSize = 50
+            }
         ]
 
 
-sliderInput : String -> Float -> (String -> Msg) -> Html Msg
-sliderInput label value_ tagger =
+sliderInput : Float -> SliderConfig -> Html Msg
+sliderInput value_ { inputName, tagger, rangeMin, rangeMax, labelText, stepSize } =
     let
         sliderValue =
             String.fromFloat value_
     in
     div []
         [ text <| sliderValue ++ " "
-        , text label
-        , input [ onInput tagger, type_ "range", value sliderValue ] []
+        , text labelText
+        , input
+            [ onInput tagger
+            , type_ "range"
+            , value sliderValue
+            , A.min <| String.fromInt rangeMin
+            , A.max <| String.fromInt rangeMax
+            , A.step <| String.fromInt stepSize
+            ]
+            []
         ]
 
 
